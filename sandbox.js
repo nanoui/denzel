@@ -1,8 +1,8 @@
 /* eslint-disable no-console, no-process-exit */
-const imdb = require('./src/imdb');
-const DENZEL_IMDB_ID = 'nm0000243';
+const imdb = require("./src/imdb");
+const DENZEL_IMDB_ID = "nm0000243";
 
-async function sandbox (actor) {
+async function sandbox(actor) {
   try {
     console.log(`📽️  fetching filmography of ${actor}...`);
     const movies = await imdb(actor);
