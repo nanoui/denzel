@@ -37,6 +37,17 @@ app.post("/movies", (request, response) => {
     });
 });
 
+// app.post("/movies/:id", (request, response) => {
+//   collection
+//     .update()
+//     .toArray((error, result) => {
+//       if(error) {
+//         return response.status(500).send(error);
+//       }
+//       response.send(result);
+//     });
+// });
+
 //to populate the database with the scrapped movies
 app.get("/movies/populate", async (request, response) => {
   const movies = await imdb(DENZEL_IMDB_ID);
@@ -49,6 +60,18 @@ app.get("/movies/populate", async (request, response) => {
 });
 
 //to return all data in our collection representing movies that are the must-watch
+app.get("/movies/mustwatch", (request, response) => {
+  collection
+    .aggregate([
+      { $match: { metascore: { $gte: 70 } } },
+    ])
+    .toArray((error, result) => {
+      if (error) {
+        return response.status(500).send(error);
+      }
+      response.send(result);
+    });
+});
 
 //Fetch a random must-watch movie
 app.get("/movies", (request, response) => {
@@ -65,6 +88,30 @@ app.get("/movies", (request, response) => {
     });
 });
 
+//Search for Denzel's movies (1)
+app.get("/movies/search", (request, response) => {
+  collection.find(
+    { metascore: { $gte: 70 }}
+  ).limit(5).toArray((error, result) => {
+    if (error) {
+      return response.status(500).send(error);
+    }
+    response.send(result);
+  });
+});
+
+//Search for Denzel's movies (2)
+app.get("/movies/search/:limit/:metascore", (request, response) => {
+  collection.find(
+    { metascore: { $gte: Number(request.params.metascore)  } }
+  ).limit(Number(request.params.limit)).toArray((error, result) => {
+    if (error) {
+      return response.status(500).send(error);
+    }
+    response.send(result);
+  });
+});
+
 //Fetch a specific movie according to its id
 app.get("/movies/:id", (request, response) => {
   collection.find({ id: request.params.id }).toArray((error, result) => {
@@ -74,21 +121,3 @@ app.get("/movies/:id", (request, response) => {
     response.send(result);
   });
 });
-
-// //Search for Denzel's movies, using a query
-// app.get("/movies/search", (request, response) => {
-//   console.log(request.query.limit);
-//   collection
-//     .aggregate([
-//       {
-//         $match: { metascore: { $gte: Number(request.query.metascore) } }
-//       },
-//       { $sample: { size: Number(request.query.limit) } }
-//     ])
-//     .toArray((error, result) => {
-//       if (error) {
-//         return response.status(500).send(error);
-//       }
-//       response.send(result);
-//     });
-// });
