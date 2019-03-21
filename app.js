@@ -5,15 +5,22 @@ const ObjectId = require("mongodb").ObjectID; //allow us to work with document i
 const imdb = require("./src/imdb");
 const DENZEL_IMDB_ID = "nm0000243";
 
+const graphqlHTTP = require('express-graphql');
+const { buildSchema } = require('graphql');
+
 const CONNECTION_URL = "mongodb+srv://nanoui:D3nZel@denzel-t5s7b.mongodb.net/test?retryWrites=true";
 const DATABASE_NAME = "movies"; //to create and use
 
 var app = Express();
-
 app.use(BodyParser.json());
 app.use(BodyParser.urlencoded({ extended: true }));
 
 var database, collection;
+
+
+// *************************************************************************************
+// **********************  USING MONGODB ***********************************************
+// *************************************************************************************
 
 // the API should listen locally the port 9292
 app.listen(9292, () => {
@@ -121,3 +128,57 @@ app.get("/movies/:id", (request, response) => {
     response.send(result);
   });
 });
+
+
+
+// *************************************************************************************
+// **********************  USING GRAPHQL (Academind Youtube channel)********************
+// *************************************************************************************
+
+app.use('/graphql', graphqlHTTP({
+  schema: buildSchema (`
+    schema {
+      query: Query
+    }
+
+    type Movie {
+      link: String
+      metascore: Int
+      synopsis: String
+      title: String
+      year: Int
+    }
+
+    type Query {
+      getRandomMovie(): Movie
+      findMovieByID(id: String): Movie
+    }
+  `),
+
+  rootValue: {
+    getRandomMovie: async () => {
+      const res = await collection.aggregate([{
+        $match: {
+          "metascore": {
+            $gt: 70
+          }
+        }
+      }, {
+        $sample: {
+          size: 1
+        }
+      }]).toArray()
+      return res[0]
+    },
+
+    findMovieByID: async (args) => {
+      let res = await collection.findOne({
+        id: args.id
+      });
+
+      return res;
+    }
+  },
+
+  graphiql: true,
+}));
